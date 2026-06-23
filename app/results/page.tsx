@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import ScoreGauge from '@/components/ScoreGauge';
 import { loadResult, loadBulkResults, clearAll } from '@/lib/store';
 import type { AnalysisResult, AnalyzedRole } from '@/lib/types';
@@ -85,8 +86,8 @@ function ResultView({ result }: { result: AnalysisResult }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Score + match strength */}
-      <section className="bg-card rounded-2xl border border-border shadow-sm p-8" aria-label="Match score">
-        <div className="flex items-center gap-10">
+      <section className="bg-card rounded-2xl border border-border shadow-sm p-6 md:p-8" aria-label="Match score">
+        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-10">
           <ScoreGauge score={result.match_score} />
           <div className="flex-1">
             <div className="flex items-center gap-2.5 mb-3">
@@ -103,7 +104,7 @@ function ResultView({ result }: { result: AnalysisResult }) {
       </section>
 
       {/* Keywords */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <section className="bg-card rounded-2xl border border-border shadow-sm p-6" aria-label="Missing keywords">
           <div className="flex items-center gap-2 mb-4">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-rose-500 dark:text-rose-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -149,7 +150,7 @@ function ResultView({ result }: { result: AnalysisResult }) {
         <h2 className="text-xl font-bold text-foreground text-center mb-7">
           3 Ways to Strengthen Your Resume
         </h2>
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {result.improvements.map((item, i) => (
             <div key={i} className="rounded-xl border border-border p-5 flex flex-col bg-card" style={{ borderLeftWidth: '3px', borderLeftColor: 'hsl(var(--primary))' }}>
               <div className="mb-3">{IMPROVEMENT_ICONS[i]}</div>
@@ -214,7 +215,26 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <header className="max-w-4xl mx-auto px-6 pt-8 pb-2">
+        <Button
+          variant="ghost"
+          onClick={handleAnalyzeAnother}
+          className="text-muted-foreground hover:text-foreground pl-0 group -ml-4"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2 transition-transform group-hover:-translate-x-1">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Home
+        </Button>
+      </header>
+
+      <motion.main 
+        className="max-w-4xl mx-auto px-6 py-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
 
         {/* ── Bulk tab bar (only shown when >1 role) ── */}
         {isBulk && (
@@ -267,14 +287,24 @@ export default function ResultsPage() {
 
         {/* ── Result content ── */}
         <div id="role-panel" role="tabpanel" aria-labelledby={isBulk ? `role-tab-${activeRoleIndex}` : undefined}>
-          <ResultView result={activeResult} />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeRoleIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ResultView result={activeResult} />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-      </main>
+      </motion.main>
 
       {/* ── Sticky footer ── */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40">
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+      <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 pb-safe">
+        <div className="max-w-4xl mx-auto px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
@@ -285,11 +315,11 @@ export default function ResultsPage() {
               : 'Last updated just now'}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               id="download-tips-btn"
               variant="outline"
-              className="rounded-full h-10"
+              className="rounded-full h-10 flex-1 sm:flex-none"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -302,7 +332,7 @@ export default function ResultsPage() {
             <Button
               id="analyze-another-btn"
               onClick={handleAnalyzeAnother}
-              className="rounded-full h-10"
+              className="rounded-full h-10 flex-1 sm:flex-none"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
                 <polyline points="23 4 23 10 17 10"/>

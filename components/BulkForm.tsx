@@ -119,7 +119,7 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
         </p>
       </div>
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: '260px 1fr', alignItems: 'start' }}>
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-[260px_1fr] items-start">
         {/* ── Left: Resume card ── */}
         <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden">
           {/* Card header */}

@@ -103,7 +103,7 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
   return (
     <div>
       {/* ── Hero ── */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-6">
         <span
           className="inline-block text-xs font-semibold tracking-widest uppercase mb-5 px-3 py-1 rounded-full bg-primary/10 text-primary"
         >
@@ -180,8 +180,8 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                 placeholder={
                   'Role: Senior UX Designer at Google...\n\nMinimum qualifications:\n• 5+ years of experience in end-to-end product design\n• Portfolio of shipped work...\n\nPreferred qualifications:\n• Experience with Figma and prototyping...\n• Ability to work with cross-functional teams...'
                 }
-                className="flex-1 w-full text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none bg-transparent leading-relaxed"
-                style={{ minHeight: '260px' }}
+                className="flex-1 w-full text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary rounded-xl p-3 bg-transparent leading-relaxed"
+                style={{ minHeight: '200px' }}
                 aria-describedby={errors.jd ? 'jd-error' : undefined}
                 aria-invalid={!!errors.jd}
               />
@@ -246,8 +246,7 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                     ? 'border-emerald-500/30 bg-emerald-500/10'
                     : 'border-border hover:border-primary/30 hover:bg-primary/5'
                 }`}
-                style={{ minHeight: '200px' }}
-                // focus:ring-blue-500 — defined inline via Tailwind utility above
+                style={{ minHeight: '160px' }}
               >
                 {file ? (
                   /* File selected */
@@ -432,12 +431,12 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                     cx="12"
                     cy="12"
                     r="10"
-                    stroke="white"
+                    stroke="currentColor"
                     strokeWidth="4"
                   />
                   <path
                     className="opacity-75"
-                    fill="white"
+                    fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
@@ -451,7 +450,7 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                   height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="white"
+                  stroke="currentColor"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
