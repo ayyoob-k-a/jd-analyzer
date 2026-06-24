@@ -77,8 +77,12 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
       setError('Please upload your resume first.');
       return;
     }
-    if (filledRoles.length === 0) {
-      setError('Please add at least one complete job description (50+ characters).');
+    if (file.size < 500) {
+      setError('The uploaded PDF appears to be empty or corrupted. Please upload a valid resume with text content.');
+      return;
+    }
+    if (filledRoles.length < 2) {
+      setError('Please add at least 2 complete job descriptions (50+ characters) for bulk analysis.');
       return;
     }
 
@@ -107,12 +111,14 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
 
   return (
     <div>
-      {/* Page heading */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Bulk Analysis</h1>
-        <p className="text-muted-foreground mt-1.5 max-w-md text-sm leading-relaxed">
-          Power-user workbench: Optimize your resume for multiple target roles
-          in one session.
+      {/* ── Hero ── */}
+      <div className="text-center mb-8 md:mb-12 mt-2">
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
+          Analyze Multiple Roles.
+        </h1>
+        <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+          Upload your resume once and compare it against up to 3 target roles
+          simultaneously. Discover which job is your strongest match.
         </p>
       </div>
 
@@ -122,7 +128,7 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
           {/* Card header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-muted-foreground" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
@@ -180,8 +186,8 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
               </>
             ) : (
               <>
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-muted-foreground" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <div className="text-muted-foreground">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -329,8 +335,8 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
           {/* Analyze All Roles button */}
           <div className="p-4 border-t border-border">
             {filledRoles.length > 0 && (
-              <p className="text-xs text-muted-foreground mb-2 text-center">
-                {filledRoles.length} role{filledRoles.length !== 1 ? 's' : ''} ready to analyze
+              <p className={`text-xs mb-2 text-center ${filledRoles.length >= 2 ? 'text-muted-foreground' : 'text-destructive'}`}>
+                {filledRoles.length} role{filledRoles.length !== 1 ? 's' : ''} ready to analyze (Minimum 2 required)
               </p>
             )}
             <Button

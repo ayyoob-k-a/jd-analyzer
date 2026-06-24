@@ -19,11 +19,12 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!hasShownSplash) {
+    if (showSplash) {
       setSplashShown();
-      const timer = setTimeout(() => setShowSplash(false), 1200);
+      const timer = setTimeout(() => setShowSplash(false), 2400);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const resultReadyRef = useRef(false);
@@ -69,17 +70,25 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="absolute inset-0 z-[100] flex items-center justify-center bg-background"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="flex items-center gap-3"
-            >
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-foreground text-background shadow-lg font-black text-xl tracking-tighter">
-                JD
-              </div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">Analyzer</h1>
-            </motion.div>
+            <div className="flex items-center">
+              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight flex items-center">
+                {"JD Analyzer".split('').map((char, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.1, delay: i * 0.1 }}
+                  >
+                    {char === ' ' ? '\u00A0' : char}
+                  </motion.span>
+                ))}
+                <motion.span
+                  animate={{ opacity: [1, 0] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  className="inline-block w-[4px] h-9 md:h-10 bg-primary ml-1"
+                />
+              </h1>
+            </div>
           </motion.div>
         ) : view === 'loading' ? (
           <motion.div

@@ -56,162 +56,77 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
   }, []); // intentionally empty — runs once on mount
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 bg-background"
-    >
-      {/* ── Animated icon ── */}
-      <div className="relative flex items-center justify-center mb-10">
-        {/* Outer ping ring */}
-        <div
-          className="absolute rounded-full animate-ping bg-primary/20"
-          style={{ width: '130px', height: '130px' }}
-        />
-        {/* Middle static ring */}
-        <div
-          className="absolute rounded-full bg-primary/30"
-          style={{ width: '104px', height: '104px' }}
-        />
-        {/* Blue circle */}
-        <div
-          className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-xl bg-primary"
-        >
-          {/* Sparkle / stars icon */}
-          <svg
-            width="34"
-            height="34"
-            viewBox="0 0 24 24"
-            fill="white"
-            aria-hidden="true"
-          >
-            <path d="M12 2 L13.8 8.4 L20 9.3 L15.7 13.5 L16.8 19.7 L12 16.9 L7.2 19.7 L8.3 13.5 L4 9.3 L10.2 8.4 Z" />
-            <circle cx="19.5" cy="3.5" r="1.4" opacity="0.7" />
-            <circle cx="4.5" cy="19" r="1" opacity="0.5" />
-          </svg>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+      {/* ── Sleek Gradient Spinner ── */}
+      <div className="relative w-24 h-24 mb-10 flex items-center justify-center">
+        {/* Outer rotating thin ring */}
+        <svg className="absolute inset-0 w-full h-full animate-[spin_2.5s_linear_infinite]" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1" className="text-muted/30" />
+          <circle cx="50" cy="50" r="48" fill="none" stroke="url(#loading-gradient)" strokeWidth="2" strokeDasharray="150 150" strokeLinecap="round" />
+          <defs>
+            <linearGradient id="loading-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(var(--primary))" />
+              <stop offset="100%" stopColor="transparent" />
+            </linearGradient>
+          </defs>
+        </svg>
+        
+        {/* Inner pulsing core */}
+        <div className="w-8 h-8 rounded-full bg-primary/20 animate-pulse flex items-center justify-center blur-[2px]" />
+        <div className="absolute w-3 h-3 rounded-full bg-primary animate-ping opacity-80" />
       </div>
 
       {/* ── Heading ── */}
-      <h1 className="text-3xl font-bold text-foreground mb-2 text-center">
-        Analyzing your resume&hellip;
+      <h1 className="text-3xl md:text-4xl font-black text-foreground mb-3 tracking-tight text-center">
+        Analyzing Match...
       </h1>
-      <p className="text-muted-foreground text-base text-center mb-10 max-w-sm leading-relaxed">
-        Our AI is meticulously scanning your skills and experiences to find the
-        perfect match.
+      <p className="text-muted-foreground text-base text-center mb-12 max-w-sm leading-relaxed">
+        Our AI is meticulously evaluating your experience against the job requirements.
       </p>
 
-      {/* ── Steps card ── */}
-      <div
-        className="bg-card rounded-2xl shadow-sm border border-border w-full p-7"
-        style={{ maxWidth: '440px' }}
-      >
-        <div className="flex flex-col gap-5 mb-7">
-          {STEP_LABELS.map((label, i) => {
-            const status = steps[i];
-            return (
-              <div key={i} className="flex items-center gap-4">
-                {/* Step icon */}
-                <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
-                  {status === 'done' ? (
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20"
-                    >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        className="text-emerald-600 dark:text-emerald-400"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                  ) : status === 'active' ? (
-                    /* Spinning ring */
-                    <svg
-                      className="animate-spin"
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-label="Loading"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="hsl(var(--border))"
-                        strokeWidth="3"
-                      />
-                      <path
-                        d="M12 2a10 10 0 0 1 10 10"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  ) : (
-                    /* Empty circle */
-                    <div className="w-7 h-7 rounded-full border-2 border-border" />
-                  )}
-                </div>
-
-                {/* Label */}
-                <span
-                  className={`text-sm ${
-                    status === 'active'
-                      ? 'font-semibold text-foreground'
-                      : status === 'done'
-                      ? 'text-muted-foreground'
-                      : 'text-muted-foreground/50'
-                  }`}
-                >
-                  {label}
-                </span>
+      {/* ── Minimalist Steps List ── */}
+      <div className="w-full max-w-[320px] flex flex-col gap-6">
+        {STEP_LABELS.map((label, i) => {
+          const status = steps[i];
+          return (
+            <div key={i} className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                {status === 'done' ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : status === 'active' ? (
+                  <svg className="animate-spin text-primary" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                )}
               </div>
-            );
-          })}
-        </div>
-
-        {/* Progress bar */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-muted-foreground">Analysis progress</span>
-            <span className="text-xs font-semibold text-foreground">
-              {Math.round(progress)}%
-            </span>
-          </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300 ease-out bg-primary"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
+              <span className={`text-[15px] font-medium tracking-wide transition-colors duration-500 ${
+                status === 'active' ? 'text-foreground animate-pulse' : 
+                status === 'done' ? 'text-foreground' : 'text-muted-foreground/40'
+              }`}>
+                {label}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* ── Time estimate ── */}
-      <div className="flex items-center gap-2 mt-6 text-sm text-primary">
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        Usually takes less than 30 seconds
+      {/* ── Sleek Progress Bar ── */}
+      <div className="w-full max-w-[320px] mt-10">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">Progress</span>
+          <span className="text-xs font-bold text-foreground">{Math.round(progress)}%</span>
+        </div>
+        <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   );

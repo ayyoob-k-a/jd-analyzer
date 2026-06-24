@@ -76,6 +76,8 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
     }
     if (!file) {
       newErrors.file = 'Please upload your resume as a PDF.';
+    } else if (file.size < 500) {
+      newErrors.file = 'The uploaded PDF appears to be empty or corrupted. Please upload a valid resume with text content.';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -105,18 +107,13 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
   return (
     <div>
       {/* ── Hero ── */}
-      <div className="text-center mb-6">
-        <span
-          className="inline-block text-xs font-semibold tracking-widest uppercase mb-5 px-3 py-1 rounded-full bg-primary/10 text-primary"
-        >
-          AI-Powered Benchmarking
-        </span>
-        <h1 className="text-5xl font-bold text-foreground mb-4 tracking-tight leading-tight">
+      <div className="text-center mb-8 md:mb-12 mt-2">
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
           Master Your Career Fit.
         </h1>
-        <p className="text-muted-foreground text-base max-w-lg mx-auto leading-relaxed">
+        <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           Instantly compare your resume against industry-leading roles. Identify
-          skill gaps and optimize your profile for the world&apos;s top tech companies.
+          skill gaps and optimize your profile for the world's top tech companies.
         </p>
       </div>
 
@@ -128,15 +125,15 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
           {/* ── Left: Target Role card ── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col">
             {/* Card header */}
-            <div className="flex items-center justify-between px-5 pt-5">
+            <div className="flex items-center justify-between px-6 pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="text-muted-foreground flex-shrink-0">
                   <svg
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#6B7280"
+                    stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -198,14 +195,14 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
           {/* ── Right: Your Resume card ── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col">
             {/* Card header */}
-            <div className="flex items-center gap-3 px-5 pt-5">
-              <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-3 px-6 pt-6">
+              <div className="text-muted-foreground flex-shrink-0">
                 <svg
-                  width="16"
-                  height="16"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#6B7280"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
