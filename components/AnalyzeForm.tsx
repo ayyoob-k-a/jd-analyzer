@@ -68,22 +68,39 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart, onError }: Anal
   };
 
   const validate = (): boolean => {
-    if (jd.trim().length < 50) {
-      toast.error('Please paste a complete job description (at least 50 characters).');
-      return false;
-    }
-    if (!file) {
-      toast.error('Please upload your resume as a PDF.');
-      return false;
-    } else if (file.size < 500) {
-      toast.error('The uploaded PDF appears to be empty or corrupted.');
-      return false;
-    } else if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds 5MB limit. Please upload a smaller PDF.');
-      return false;
-    }
-    return true;
-  };
+  const jdLength = jd.trim().length;
+
+  if (jdLength < 50) {
+    toast.error(
+      'Please paste a complete job description (at least 50 characters).'
+    );
+    return false;
+  }
+
+  if (jdLength > 10000) {
+    toast.error(
+      'Job description is too long. Maximum 10,000 characters allowed.'
+    );
+    return false;
+  }
+
+  if (!file) {
+    toast.error('Please upload your resume as a PDF.');
+    return false;
+  }
+
+  if (file.size < 500) {
+    toast.error('The uploaded PDF appears to be empty or corrupted.');
+    return false;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('File size exceeds 5MB limit. Please upload a smaller PDF.');
+    return false;
+  }
+
+  return true;
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
