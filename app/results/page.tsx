@@ -247,10 +247,9 @@ export default function ResultsPage() {
   }, []);
 
   const bulkRoles = isMounted ? loadBulkResults() : null;
-  const singleResult = isMounted ? (bulkRoles ? null : loadResult()) : null;
-
-  const isBulk = bulkRoles !== null && bulkRoles.length > 1;
-  const hasData = isBulk || singleResult !== null || (bulkRoles && bulkRoles.length === 1);
+  const isBulk = bulkRoles !== null && bulkRoles.length > 0;
+  const singleResult = isMounted && !isBulk ? loadResult() : null;
+  const hasData = isBulk || singleResult !== null;
 
   useEffect(() => {
     if (isMounted && !hasData) {

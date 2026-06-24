@@ -78,6 +78,10 @@ export async function analyzeBulkResume(
     throw new Error('Invalid response from server');
   }
 
+  if (Array.isArray(json.data.ranked_roles) && json.data.ranked_roles.length === 0) {
+    throw new Error('No roles could be analyzed. The AI was unable to extract valid information from the provided job descriptions.');
+  }
+
   return json.data.ranked_roles.map((data: { role_title?: string; match_score?: number; primary_reason?: string }) => ({
     role_title: data.role_title ?? 'Unknown Role',
     match_score: data.match_score ?? 0,

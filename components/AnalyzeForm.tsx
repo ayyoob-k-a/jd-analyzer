@@ -5,6 +5,7 @@ import { analyzeResume } from '@/lib/api';
 import type { AnalysisResult } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { setSessionData } from '@/lib/store';
+import { toast } from 'sonner';
 
 const SAMPLE_JD = `We are looking for a Senior UX Designer to join our Cloud team. Key requirements include experience with complex B2B systems, accessibility standards (WCAG), and a strong portfolio demonstrating leadership in the design process.
 
@@ -23,15 +24,14 @@ Preferred qualifications:
 interface AnalyzeFormProps {
   onSuccess: (result: AnalysisResult) => void;
   onLoadingStart?: () => void;
+  onError: (msg: string) => void;
 }
 
-export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormProps) {
+export default function AnalyzeForm({ onSuccess, onLoadingStart, onError }: AnalyzeFormProps) {
   const [jd, setJd] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ jd?: string; file?: string }>({});
-  const [apiError, setApiError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +39,6 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
   const handleFileSet = (selected: File) => {
     setFile(selected);
     setFileName(selected.name);
-    setErrors((prev) => ({ ...prev, file: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,32 +68,31 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
   };
 
   const validate = (): boolean => {
-    const newErrors: { jd?: string; file?: string } = {};
     if (jd.trim().length < 50) {
-      newErrors.jd =
-        'Please paste a complete job description (at least 50 characters).';
+      toast.error('Please paste a complete job description (at least 50 characters).');
+      return false;
     }
     if (!file) {
-      newErrors.file = 'Please upload your resume as a PDF.';
+      toast.error('Please upload your resume as a PDF.');
+      return false;
     } else if (file.size < 500) {
-      newErrors.file = 'The uploaded PDF appears to be empty or corrupted. Please upload a valid resume with text content.';
+      toast.error('The uploaded PDF appears to be empty or corrupted.');
+      return false;
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setApiError(null);
     onLoadingStart?.();
     try {
       const result = await analyzeResume(jd, file!);
       setSessionData(file!, jd);
       onSuccess(result);
     } catch (err) {
-      setApiError(
+      onError(
         err instanceof Error
           ? err.message
           : 'An unexpected error occurred. Please try again.'
@@ -113,7 +111,7 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
         </h1>
         <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           Instantly compare your resume against industry-leading roles. Identify
-          skill gaps and optimize your profile for the world's top tech companies.
+          skill gaps and optimize your profile for the world&apos;s top tech companies.
         </p>
       </div>
 
@@ -156,7 +154,6 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                 type="button"
                 onClick={() => {
                   setJd(SAMPLE_JD);
-                  setErrors((p) => ({ ...p, jd: undefined }));
                 }}
                 className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >
@@ -172,23 +169,13 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
               <textarea
                 id="jd-textarea"
                 value={jd}
-                onChange={(e) => {
-                  setJd(e.target.value);
-                  if (errors.jd) setErrors((p) => ({ ...p, jd: undefined }));
-                }}
+                onChange={(e) => setJd(e.target.value)}
                 placeholder={
                   'Role: Senior UX Designer at Google...\n\nMinimum qualifications:\n• 5+ years of experience in end-to-end product design\n• Portfolio of shipped work...\n\nPreferred qualifications:\n• Experience with Figma and prototyping...\n• Ability to work with cross-functional teams...'
                 }
                 className="flex-1 w-full text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary rounded-xl p-3 bg-transparent leading-relaxed"
                 style={{ minHeight: '200px' }}
-                aria-describedby={errors.jd ? 'jd-error' : undefined}
-                aria-invalid={!!errors.jd}
               />
-              {errors.jd && (
-                <p id="jd-error" className="text-rose-500 text-xs mt-2" role="alert">
-                  {errors.jd}
-                </p>
-              )}
             </div>
           </div>
 
@@ -237,7 +224,6 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                 role="button"
                 tabIndex={0}
                 aria-label="Upload resume file"
-                aria-describedby={errors.file ? 'file-error' : undefined}
                 className={`flex-1 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all p-8 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   isDragOver
                     ? 'border-primary/50 bg-primary/10'
@@ -328,12 +314,6 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
                 )}
               </div>
 
-              {errors.file && (
-                <p id="file-error" className="text-rose-500 text-xs -mt-2" role="alert">
-                  {errors.file}
-                </p>
-              )}
-
               {/* Privacy note */}
               <div className="flex items-start gap-2.5 p-3.5 bg-muted rounded-xl">
                 <svg
@@ -371,42 +351,6 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
             />
           </div>
         </div>
-
-        {/* ── API Error Banner ── */}
-        {apiError && (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl bg-destructive/10 border border-destructive/20 p-4 flex justify-between items-start gap-3"
-          >
-            <div className="flex items-start gap-2">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="hsl(var(--destructive))"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="flex-shrink-0 mt-0.5"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <p className="text-destructive text-sm">{apiError}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setApiError(null)}
-              className="text-destructive/70 hover:text-destructive transition-colors text-lg leading-none flex-shrink-0"
-              aria-label="Dismiss error"
-            >
-              ×
-            </button>
-          </div>
-        )}
 
         {/* ── Submit + trust badges ── */}
         <div className="flex flex-col items-center gap-4">

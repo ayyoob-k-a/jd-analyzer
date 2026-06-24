@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from 'sonner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,7 +25,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       {/* suppressHydrationWarning is required by next-themes */}
       <body className="min-h-screen antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-center" expand={true} />
+        </ThemeProvider>
       </body>
     </html>
   );

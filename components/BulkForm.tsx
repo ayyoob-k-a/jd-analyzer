@@ -5,6 +5,7 @@ import { analyzeBulkResume } from '@/lib/api';
 import type { RankedRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { setSessionData } from '@/lib/store';
+import { toast } from 'sonner';
 
 interface Role {
   id: number;
@@ -15,6 +16,7 @@ interface Role {
 interface BulkFormProps {
   onBulkSuccess: (roles: RankedRole[]) => void;
   onLoadingStart?: () => void;
+  onError: (msg: string) => void;
 }
 
 const MAX_ROLES = 3;
@@ -31,7 +33,7 @@ function getRoleSubtitle(jd: string): string {
   return 'Click to edit';
 }
 
-export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProps) {
+export default function BulkForm({ onBulkSuccess, onLoadingStart, onError }: BulkFormProps) {
   const [roles, setRoles] = useState<Role[]>([
     { id: 1, jd: '', isExpanded: true },
     { id: 2, jd: '', isExpanded: false },
@@ -40,8 +42,6 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,7 +50,6 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
     if (selected) {
       setFile(selected);
       setFileName(selected.name);
-      setError(null);
     }
   };
 
@@ -70,19 +69,16 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
   const slotsAvailable = MAX_ROLES - filledRoles.length;
 
   const handleAnalyze = async () => {
-    setError(null);
-    setApiError(null);
-
     if (!file) {
-      setError('Please upload your resume first.');
+      toast.error('Please upload your resume first.');
       return;
     }
     if (file.size < 500) {
-      setError('The uploaded PDF appears to be empty or corrupted. Please upload a valid resume with text content.');
+      toast.error('The uploaded PDF appears to be empty or corrupted.');
       return;
     }
     if (filledRoles.length < 2) {
-      setError('Please add at least 2 complete job descriptions (50+ characters) for bulk analysis.');
+      toast.error('Please add at least 2 complete job descriptions (50+ characters) for bulk analysis.');
       return;
     }
 
@@ -99,7 +95,7 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
 
       onBulkSuccess(results);
     } catch (err) {
-      setApiError(
+      onError(
         err instanceof Error
           ? err.message
           : 'An unexpected error occurred. Please try again.'
@@ -315,22 +311,7 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
             ))}
           </div>
 
-          {/* Errors */}
-          {(error || apiError) && (
-            <div className="px-4 pb-4">
-              <div role="alert" className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 flex justify-between items-start gap-2">
-                <p className="text-destructive text-sm">{error ?? apiError}</p>
-                <button
-                  type="button"
-                  onClick={() => { setError(null); setApiError(null); }}
-                  className="text-destructive/70 hover:text-destructive text-lg leading-none flex-shrink-0"
-                  aria-label="Dismiss error"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Errors handled via toast */}
 
           {/* Analyze All Roles button */}
           <div className="p-4 border-t border-border">
