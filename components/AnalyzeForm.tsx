@@ -78,6 +78,9 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart, onError }: Anal
     } else if (file.size < 500) {
       toast.error('The uploaded PDF appears to be empty or corrupted.');
       return false;
+    } else if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds 5MB limit. Please upload a smaller PDF.');
+      return false;
     }
     return true;
   };
@@ -92,11 +95,12 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart, onError }: Anal
       setSessionData(file!, jd);
       onSuccess(result);
     } catch (err) {
-      onError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred. Please try again.'
-      );
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
+      if (typeof onError === 'function') {
+        onError(msg);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }

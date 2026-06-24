@@ -77,6 +77,10 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart, onError }: Bul
       toast.error('The uploaded PDF appears to be empty or corrupted.');
       return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds 5MB limit. Please upload a smaller PDF.');
+      return;
+    }
     if (filledRoles.length < 2) {
       toast.error('Please add at least 2 complete job descriptions (50+ characters) for bulk analysis.');
       return;
@@ -95,11 +99,12 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart, onError }: Bul
 
       onBulkSuccess(results);
     } catch (err) {
-      onError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred. Please try again.'
-      );
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
+      if (typeof onError === 'function') {
+        onError(msg);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
