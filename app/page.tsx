@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import AnalyzeForm from '@/components/AnalyzeForm';
 import BulkForm from '@/components/BulkForm';
 import LoadingScreen from '@/components/LoadingScreen';
+import Footer from '@/components/Footer';
 import { saveResult, saveBulkResults, hasShownSplash, setSplashShown } from '@/lib/store';
 import type { AnalysisResult, RankedRole } from '@/lib/types';
 
@@ -142,6 +143,7 @@ export default function Home() {
                 )}
               </AnimatePresence>
             </main>
+            <Footer />
           </motion.div>
         )}
       </AnimatePresence>

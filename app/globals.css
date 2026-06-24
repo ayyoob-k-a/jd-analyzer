@@ -11,6 +11,11 @@
   --color-score-strong: #10B981;
   --color-score-partial: #F59E0B;
   --color-score-weak: #F43F5E;
+  --animate-scan: scan 2s ease-in-out infinite;
+  @keyframes scan {
+    0%, 100% { top: 0; }
+    50% { top: 100%; }
+  }
 }
 
 /* ── shadcn design token mapping ─────────────────────────────────────────── */

@@ -25,12 +25,15 @@ export default function Navbar({ activeTab, onTabChange }: NavbarProps) {
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
 
         {/* ── Logo ── */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-2.5">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-foreground text-background font-black text-sm tracking-tighter"
           >
             JD
           </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+            v1.0
+          </span>
         </div>
 
         {/* ── Single / Bulk tab toggle ── */}
@@ -121,13 +124,6 @@ export default function Navbar({ activeTab, onTabChange }: NavbarProps) {
             </div>
           )}
 
-          {/* Current page badge */}
-          <div
-            className="hidden sm:block px-4 py-1.5 rounded-full text-sm font-semibold text-primary-foreground select-none bg-primary"
-            aria-current="page"
-          >
-            Analyze
-          </div>
         </div>
       </div>
     </nav>

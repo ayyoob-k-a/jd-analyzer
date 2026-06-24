@@ -57,31 +57,27 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
-      {/* ── Sleek Gradient Spinner ── */}
-      <div className="relative w-24 h-24 mb-10 flex items-center justify-center">
-        {/* Outer rotating thin ring */}
-        <svg className="absolute inset-0 w-full h-full animate-[spin_2.5s_linear_infinite]" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1" className="text-muted/30" />
-          <circle cx="50" cy="50" r="48" fill="none" stroke="url(#loading-gradient)" strokeWidth="2" strokeDasharray="150 150" strokeLinecap="round" />
-          <defs>
-            <linearGradient id="loading-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" />
-              <stop offset="100%" stopColor="transparent" />
-            </linearGradient>
-          </defs>
-        </svg>
+      {/* ── Document Scanning Animation ── */}
+      <div className="relative w-20 h-24 mb-10 border-2 border-border rounded-xl bg-card overflow-hidden shadow-sm flex items-center justify-center">
+        {/* Mock Document Lines */}
+        <div className="w-full h-full p-4 flex flex-col gap-2 opacity-40">
+          <div className="w-3/4 h-1.5 bg-muted-foreground rounded-full" />
+          <div className="w-full h-1.5 bg-muted-foreground rounded-full" />
+          <div className="w-5/6 h-1.5 bg-muted-foreground rounded-full" />
+          <div className="w-full h-1.5 bg-muted-foreground rounded-full" />
+          <div className="w-4/5 h-1.5 bg-muted-foreground rounded-full" />
+        </div>
         
-        {/* Inner pulsing core */}
-        <div className="w-8 h-8 rounded-full bg-primary/20 animate-pulse flex items-center justify-center blur-[2px]" />
-        <div className="absolute w-3 h-3 rounded-full bg-primary animate-ping opacity-80" />
+        {/* Scanning Laser Line */}
+        <div className="absolute inset-x-0 h-0.5 bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.5)] animate-[scan_2s_ease-in-out_infinite] opacity-80" />
       </div>
 
       {/* ── Heading ── */}
-      <h1 className="text-3xl md:text-4xl font-black text-foreground mb-3 tracking-tight text-center">
-        Analyzing Match...
+      <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3 tracking-tight text-center">
+        Processing Document
       </h1>
-      <p className="text-muted-foreground text-base text-center mb-12 max-w-sm leading-relaxed">
-        Our AI is meticulously evaluating your experience against the job requirements.
+      <p className="text-muted-foreground text-sm text-center mb-10 max-w-sm leading-relaxed">
+        Extracting skills and calculating match criteria.
       </p>
 
       {/* ── Minimalist Steps List ── */}
