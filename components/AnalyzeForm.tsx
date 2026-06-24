@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { analyzeResume } from '@/lib/api';
 import type { AnalysisResult } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { setSessionData } from '@/lib/store';
 
 const SAMPLE_JD = `We are looking for a Senior UX Designer to join our Cloud team. Key requirements include experience with complex B2B systems, accessibility standards (WCAG), and a strong portfolio demonstrating leadership in the design process.
 
@@ -88,6 +89,7 @@ export default function AnalyzeForm({ onSuccess, onLoadingStart }: AnalyzeFormPr
     onLoadingStart?.();
     try {
       const result = await analyzeResume(jd, file!);
+      setSessionData(file!, jd);
       onSuccess(result);
     } catch (err) {
       setApiError(

@@ -11,8 +11,15 @@ export interface AnalysisResult {
   improvements: Improvement[];  // exactly 3
 }
 
-/** One analyzed role entry used in bulk mode */
-export interface AnalyzedRole {
-  name: string;           // display name for the tab (derived from JD first line)
-  result: AnalysisResult;
+/** Ranked role entry returned by bulk analysis */
+export interface RankedRole {
+  role_title: string;
+  match_score: number;
+  primary_reason: string;
+}
+
+export interface TailoredTipsResult {
+  executive_summary: string;
+  bullet_point_rewrites: string[];
+  interview_prep_focus: string[];
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { analyzeResume } from '@/lib/api';
-import type { AnalyzedRole } from '@/lib/types';
+import { analyzeBulkResume } from '@/lib/api';
+import type { RankedRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { setSessionData } from '@/lib/store';
 
 interface Role {
   id: number;
@@ -12,7 +13,7 @@ interface Role {
 }
 
 interface BulkFormProps {
-  onBulkSuccess: (roles: AnalyzedRole[]) => void;
+  onBulkSuccess: (roles: RankedRole[]) => void;
   onLoadingStart?: () => void;
 }
 
@@ -85,18 +86,14 @@ export default function BulkForm({ onBulkSuccess, onLoadingStart }: BulkFormProp
     onLoadingStart?.();
 
     try {
-      // Analyze all filled roles in parallel
-      const results = await Promise.all(
-        filledRoles.map((role) => analyzeResume(role.jd, file!))
-      );
+      // Analyze all filled roles using the single bulk endpoint
+      const jds = filledRoles.map((role) => role.jd);
+      const results = await analyzeBulkResume(jds, file!);
 
-      // Pair each result with the role's display name
-      const analyzedRoles: AnalyzedRole[] = filledRoles.map((role, i) => ({
-        name: getRoleTitle(role.jd, roles.indexOf(role)),
-        result: results[i],
-      }));
+      // Store the global file and the stringified JDs array for the Tailored Tips feature
+      setSessionData(file!, JSON.stringify(jds));
 
-      onBulkSuccess(analyzedRoles);
+      onBulkSuccess(results);
     } catch (err) {
       setApiError(
         err instanceof Error

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import ScoreGauge from '@/components/ScoreGauge';
-import { loadResult, loadBulkResults, clearAll } from '@/lib/store';
-import type { AnalysisResult, AnalyzedRole } from '@/lib/types';
+import { loadResult, loadBulkResults, clearAll, currentFile, currentJd } from '@/lib/store';
+import { generateTailoredTips } from '@/lib/api';
+import type { AnalysisResult, RankedRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 
 // ── Improvement icons ─────────────────────────────────────────────────────────
@@ -171,19 +172,93 @@ function ResultView({ result }: { result: AnalysisResult }) {
   );
 }
 
+// ── Bulk Result View (Leaderboard) ────────────────────────────────────────────
+function BulkLeaderboardView({ roles }: { roles: RankedRole[] }) {
+  const sortedRoles = [...roles].sort((a, b) => b.match_score - a.match_score);
+
+  return (
+    <div className="flex flex-col gap-8 md:gap-12 mt-4 md:mt-8">
+      <div className="text-center mb-2">
+        <h2 className="text-4xl md:text-5xl font-black tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
+          Role Leaderboard
+        </h2>
+        <p className="text-muted-foreground mt-4 text-lg md:text-xl font-medium max-w-xl mx-auto">
+          Here is how your resume stacks up against your target roles.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {sortedRoles.map((role, i) => {
+          const meta = getMatchMeta(role.match_score);
+          const isTop = i === 0;
+
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1, ease: [0.23, 1, 0.32, 1] }}
+              className={`relative group overflow-hidden rounded-3xl transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl ${
+                isTop 
+                  ? 'bg-gradient-to-br from-background to-muted border-[1.5px] border-primary/30 shadow-lg' 
+                  : 'bg-card border border-border shadow-sm hover:border-primary/20'
+              }`}
+            >
+              {/* Subtle glass reflection effect */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+              <div className="p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 relative z-10">
+                
+                {/* Rank Badge & Score */}
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-2xl mb-4 font-black text-xl shadow-sm ${
+                    isTop ? 'bg-primary text-primary-foreground shadow-primary/30' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {isTop ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    ) : (
+                      `#${i + 1}`
+                    )}
+                  </div>
+                  <ScoreGauge score={role.match_score} />
+                  <span className={`mt-4 px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${meta.badgeBgClass} ${meta.iconClass}`}>
+                    {meta.label}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-center md:text-left md:mt-2">
+                  <h3 className={`font-bold tracking-tight text-foreground ${isTop ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+                    {role.role_title}
+                  </h3>
+                  <div className="mt-4 text-muted-foreground leading-relaxed text-sm md:text-base">
+                    {role.primary_reason}
+                  </div>
+                </div>
+
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ResultsPage() {
   const router = useRouter();
 
   // Load whichever result type was saved (bulk takes priority, falls back to single)
-  const [bulkRoles] = useState<AnalyzedRole[] | null>(() =>
+  const [bulkRoles] = useState<RankedRole[] | null>(() =>
     typeof window !== 'undefined' ? loadBulkResults() : null
   );
   const [singleResult] = useState<AnalysisResult | null>(() =>
     typeof window !== 'undefined' ? (bulkRoles ? null : loadResult()) : null
   );
 
-  const [activeRoleIndex, setActiveRoleIndex] = useState(0);
+
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const isBulk = bulkRoles !== null && bulkRoles.length > 1;
   const hasData = isBulk || singleResult !== null || (bulkRoles && bulkRoles.length === 1);
@@ -197,6 +272,28 @@ export default function ResultsPage() {
     router.push('/');
   };
 
+  const handleDownloadTips = async () => {
+    try {
+      const resume = currentFile;
+      const jd = currentJd;
+
+      if (!resume || !jd) {
+        alert('Session data expired. Please analyze your resume again.');
+        return;
+      }
+
+      setIsDownloading(true);
+      const tipsData = await generateTailoredTips(jd, resume);
+      const { generatePdfDocument } = await import('@/lib/pdf');
+      generatePdfDocument(tipsData);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate tips. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (!hasData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading…">
@@ -207,11 +304,6 @@ export default function ResultsPage() {
       </div>
     );
   }
-
-  // Determine which single result to show
-  const activeResult: AnalysisResult = isBulk
-    ? bulkRoles![activeRoleIndex].result
-    : (bulkRoles?.[0]?.result ?? singleResult!);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -235,71 +327,11 @@ export default function ResultsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-
-        {/* ── Bulk tab bar (only shown when >1 role) ── */}
-        {isBulk && (
-          <nav
-            className="bg-card rounded-2xl border border-border shadow-sm p-3 mb-4 flex items-center gap-2 overflow-x-auto"
-            aria-label="Role tabs"
-          >
-            {bulkRoles!.map((role, i) => {
-              const meta = getMatchMeta(role.result.match_score);
-              const isActive = i === activeRoleIndex;
-              return (
-                <button
-                  key={i}
-                  id={`role-tab-${i}`}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls="role-panel"
-                  onClick={() => setActiveRoleIndex(i)}
-                  className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  {/* Role number circle */}
-                  <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                      isActive ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-
-                  {/* Role name (truncated) */}
-                  <span className="max-w-[140px] truncate">{role.name}</span>
-
-                  {/* Score badge */}
-                  <span
-                    className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      isActive ? 'bg-primary-foreground/20 text-primary-foreground' : meta.tabBadgeClass
-                    }`}
-                  >
-                    {role.result.match_score}%
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
+        {isBulk ? (
+          <BulkLeaderboardView roles={bulkRoles!} />
+        ) : (
+          <ResultView result={singleResult!} />
         )}
-
-        {/* ── Result content ── */}
-        <div id="role-panel" role="tabpanel" aria-labelledby={isBulk ? `role-tab-${activeRoleIndex}` : undefined}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeRoleIndex}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ResultView result={activeResult} />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
       </motion.main>
 
       {/* ── Sticky footer ── */}
@@ -320,13 +352,27 @@ export default function ResultsPage() {
               id="download-tips-btn"
               variant="outline"
               className="rounded-full h-10 flex-1 sm:flex-none"
+              onClick={handleDownloadTips}
+              disabled={isDownloading}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Download Tips
+              {isDownloading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mr-2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download Tips
+                </>
+              )}
             </Button>
 
             <Button

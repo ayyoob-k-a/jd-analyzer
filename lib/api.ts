@@ -1,115 +1,119 @@
-import type { AnalysisResult } from './types';
+import type { AnalysisResult, TailoredTipsResult, RankedRole } from './types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-
-// ── Mock mode ─────────────────────────────────────────────────────────────────
-// Set USE_MOCK = false when your real backend is ready.
-const USE_MOCK = true;
-
-/** Three distinct mock results so bulk mode shows varied scores per role */
-const MOCK_RESULTS: AnalysisResult[] = [
-  {
-    match_score: 75,
-    missing_keywords: ['Kubernetes', 'AWS Lambda', 'Microservices', 'Terraform', 'Agile Coaching'],
-    matched_keywords: ['TypeScript', 'React Native', 'GraphQL', 'System Design', 'CI/CD Pipelines', 'Node.js'],
-    improvements: [
-      {
-        title: 'Quantify Impact',
-        detail: 'Add specific metrics to your "React Native" project, such as "reduced load time by 30%."',
-        action: 'View Examples',
-      },
-      {
-        title: 'Bridge the Cloud Gap',
-        detail: "You mentioned 'Cloud Architecture' but missed 'AWS Lambda'. Explicitly name the services you used.",
-        action: 'Learn How',
-      },
-      {
-        title: 'Lead with Keywords',
-        detail: "Move your 'TypeScript' proficiency to your professional summary for immediate ATS visibility.",
-        action: 'Get Templates',
-      },
-    ],
-  },
-  {
-    match_score: 52,
-    missing_keywords: ['Docker', 'Kubernetes', 'Machine Learning', 'Python', 'Data Pipelines'],
-    matched_keywords: ['JavaScript', 'React', 'REST APIs', 'PostgreSQL', 'Agile'],
-    improvements: [
-      {
-        title: 'Add Cloud Skills',
-        detail: "The JD emphasizes Docker and Kubernetes heavily. Even a personal project deploying to AWS ECS would strengthen your profile.",
-        action: 'Find Courses',
-      },
-      {
-        title: 'Show Leadership',
-        detail: "Add a bullet for each role where you mentored others or led a project — leadership signals matter at this level.",
-        action: 'See Examples',
-      },
-      {
-        title: 'Reorder Your Stack',
-        detail: "List your most relevant technologies first. Currently 'JavaScript' appears after less relevant items.",
-        action: 'Get Templates',
-      },
-    ],
-  },
-  {
-    match_score: 38,
-    missing_keywords: ['Go', 'Rust', 'Distributed Systems', 'gRPC', 'Apache Kafka', 'Elasticsearch'],
-    matched_keywords: ['JavaScript', 'Git', 'Agile'],
-    improvements: [
-      {
-        title: 'Build Core Skills',
-        detail: "This role requires distributed-systems experience. Start with a side project using Kafka or RabbitMQ to fill the gap.",
-        action: 'Find Resources',
-      },
-      {
-        title: 'Get Certifications',
-        detail: "AWS or GCP certifications would immediately signal backend credibility to this hiring team.",
-        action: 'View Paths',
-      },
-      {
-        title: 'Target Similar Roles',
-        detail: "Your current experience is a strong match for mid-level roles. Consider those to build toward this position.",
-        action: 'See Options',
-      },
-    ],
-  },
-];
-
-/** Round-robin index so each parallel call in a bulk session gets a different mock */
-let mockCallIndex = 0;
-
-function mockDelay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-// ─────────────────────────────────────────────────────────────────────────────
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://jd-analyzer-backend-54rx.onrender.com';
 
 export async function analyzeResume(
   jd: string,
   resume: File
 ): Promise<AnalysisResult> {
-  if (USE_MOCK) {
-    // Capture the index synchronously before the await so parallel calls each get a different result
-    const idx = mockCallIndex++ % MOCK_RESULTS.length;
-    await mockDelay(2500);
-    return MOCK_RESULTS[idx];
-  }
-
   const form = new FormData();
-  form.append('jd', jd);
+  form.append('jd_text', jd);
   form.append('resume', resume);
 
-  const res = await fetch(`${BASE}/api/analyze`, {
+  const res = await fetch(`${BASE}/api/v1/analyze`, {
     method: 'POST',
+    headers: {
+      accept: 'application/json',
+    },
     body: form,
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(
-      (err as { error?: string }).error ?? `Server error ${res.status}`
+      (err as { detail?: string }).detail ?? `Server error ${res.status}`
     );
   }
 
-  return res.json();
+  const json = await res.json();
+  console.log('API Response:', json);
+
+  if (json.status !== 'success' || !json.data) {
+    throw new Error('Invalid response from server');
+  }
+
+  const data = json.data;
+
+  // Map backend response structure to frontend types
+  return {
+    match_score: data.match_score ?? 0,
+    missing_keywords: data.missing_keywords ?? [],
+    matched_keywords: data.matched_keywords ?? [],
+    improvements: (data.improvements ?? []).map(
+      (imp: { jd_reference?: string; suggestion?: string }) => ({
+        title: imp.jd_reference ?? 'Improvement Area',
+        detail: imp.suggestion ?? '',
+      })
+    ),
+  };
+}
+
+export async function analyzeBulkResume(
+  jds: string[],
+  resume: File
+): Promise<RankedRole[]> {
+  const form = new FormData();
+  form.append('jds_json', JSON.stringify(jds));
+  form.append('resume', resume);
+
+  const res = await fetch(`${BASE}/api/v1/bulk-analyze`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+    },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { detail?: string }).detail ?? `Server error ${res.status}`
+    );
+  }
+
+  const json = await res.json();
+  console.log('Bulk API Response:', json);
+
+  if (json.status !== 'success' || !json.data?.ranked_roles) {
+    throw new Error('Invalid response from server');
+  }
+
+  return json.data.ranked_roles.map((data: { role_title?: string; match_score?: number; primary_reason?: string }) => ({
+    role_title: data.role_title ?? 'Unknown Role',
+    match_score: data.match_score ?? 0,
+    primary_reason: data.primary_reason ?? 'No reason provided.',
+  }));
+}
+
+export async function generateTailoredTips(
+  jd: string,
+  resume: File
+): Promise<TailoredTipsResult> {
+  const form = new FormData();
+  form.append('jd_text', jd);
+  form.append('resume', resume);
+
+  const res = await fetch(`${BASE}/api/v1/tailored-tips`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+    },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      (err as { detail?: string }).detail ?? `Server error ${res.status}`
+    );
+  }
+
+  const json = await res.json();
+  console.log('Tailored Tips Response:', json);
+
+  if (json.status !== 'success' || !json.data) {
+    throw new Error('Invalid response from server');
+  }
+
+  return json.data as TailoredTipsResult;
 }

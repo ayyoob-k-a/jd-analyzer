@@ -7,20 +7,23 @@ import Navbar from '@/components/Navbar';
 import AnalyzeForm from '@/components/AnalyzeForm';
 import BulkForm from '@/components/BulkForm';
 import LoadingScreen from '@/components/LoadingScreen';
-import { saveResult, saveBulkResults } from '@/lib/store';
-import type { AnalysisResult, AnalyzedRole } from '@/lib/types';
+import { saveResult, saveBulkResults, hasShownSplash, setSplashShown } from '@/lib/store';
+import type { AnalysisResult, RankedRole } from '@/lib/types';
 
 type AppView = 'form' | 'loading';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
   const [view, setView] = useState<AppView>('form');
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(!hasShownSplash);
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 1200);
-    return () => clearTimeout(timer);
+    if (!hasShownSplash) {
+      setSplashShown();
+      const timer = setTimeout(() => setShowSplash(false), 1200);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const resultReadyRef = useRef(false);
@@ -44,7 +47,7 @@ export default function Home() {
     tryNavigate();
   };
 
-  const handleBulkSuccess = (roles: AnalyzedRole[]) => {
+  const handleBulkSuccess = (roles: RankedRole[]) => {
     saveBulkResults(roles);
     resultReadyRef.current = true;
     tryNavigate();
